@@ -1,0 +1,16 @@
+```{r knit-setting-main, eval = TRUE, include=FALSE}
+# knit setting for this file.
+knitr::opts_chunk$set(eval = TRUE, include = TRUE, echo = TRUE, warning = FALSE, collapse = TRUE)
+```
+
+# Introduction
+
+say something.
+
+```{r call-hello, ref.label='def-function-example'}
+# call pre-defined chunk
+```
+
+## Why bookdown?
+
+a good question. 

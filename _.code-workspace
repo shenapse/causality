@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"r.rmarkdown.knit.defaults.knitWorkingDirectory": "workspace root",
+		"cSpell.words": [
+			"jsonlite",
+			"magrittr",
+			"rprojroot",
+			"stringr",
+			"withr"
+		]
+	}
+}

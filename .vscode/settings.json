@@ -1,0 +1,9 @@
+{
+	"r.rmarkdown.knit.defaults.knitWorkingDirectory": "workspace root",
+	"r.rmarkdown.knit.openOutputFile": true,
+	"cSpell.enableFiletypes": [
+		"md",
+		"!.code_workspace",
+		"Rmd"
+	]
+}

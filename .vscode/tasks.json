@@ -1,0 +1,77 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Clear Cache",
+			"type": "shell",
+			"command": "Rscript '${workspaceFolder}/tools/clear_cache.R'",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"close": true
+			}
+		},
+		{
+			"label": "Clear All Rendered Results",
+			"type": "shell",
+			"command": "Rscript ${workspaceFolder}/tools/clear_all_output.R",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"close": true
+			}
+		},
+		{
+			"label": "Render Book (stop)",
+			"type": "shell",
+			"command": "Rscript '${workspaceFolder}/tools/render_book.R'",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				//"close": true
+			}
+		},
+		{
+			"label": "Render Book",
+			"type": "shell",
+			"command": "Rscript '${workspaceFolder}/tools/render_book.R'",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"close": true
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "Open Book in Chrome",
+			"type": "shell",
+			"command": "Rscript ${workspaceFolder}/tools/open_in_chrome.R",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"close": true
+			}
+		},
+		{
+			"label": "Serve and Open Book",
+			"type": "shell",
+			"command": "Rscript ${workspaceFolder}/tools/serve_book.R & google-chrome http://127.0.0.1:4321",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"close": true
+			}
+		},
+	]
+}
