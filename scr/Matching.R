@@ -2,6 +2,7 @@ library(magrittr)
 
 path_data <- project_root$find_file("data/ihdp_obs.csv")
 df <- read.table(path_data, header = TRUE)
+# df for estimating propensity score
 df_TX <- df %>%
     dplyr::select(-y_factual)
 

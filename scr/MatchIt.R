@@ -1,7 +1,8 @@
 library(magrittr)
 
-source(project_root$find_file("scr/pre_process.R"))
-# now df, df_norm, mod_rec are available
+path_data <- project_root$find_file("data/ihdp_obs.csv")
+df <- read.table(path_data, header = TRUE)
+
 df_juice <- recipes::recipe(df, treatment ~ .) %>%
     # add interaction term for reduce in-balance (see balance check below)
     # recipes::step_interact(terms = ~ X6:X4) %>%
