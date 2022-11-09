@@ -1,5 +1,0 @@
-default:
-  output_dir_basename: "docs"
-  scr_dir_basename: "scr"
-  not_search_here: ".history"
-  rmd_basename: "top.Rmd"
