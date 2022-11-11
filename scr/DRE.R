@@ -28,15 +28,12 @@ cobalt::bal.plot(W.out, var.name = "X6", which = "both")
 # outcome model
 #-------------------------------
 
-xgb_recipe <- df %>%
-    dplyr::bind_cols(W.out$ps %>% as.data.frame() %>% magrittr::set_colnames(c("ps"))) %>%
+xgb_recipe <- df_juice %>%
     recipes::recipe(y_factual ~ .)
 
 df_outcome <- xgb_recipe %>%
     recipes::prep() %>%
     recipes::juice()
-
-split <- rsample::initial_split(df_outcome, prop = .8)
 
 # fix model spec
 xgb_spec <- parsnip::boost_tree(
@@ -56,11 +53,7 @@ xgb_wf <- workflows::workflow() %>%
     workflows::add_recipe(xgb_recipe) %>%
     workflows::add_model(xgb_spec)
 
-# xgb_trained <- xgb_wf %>% tune::last_fit(split, metrics = yardstick::metric_set(yardstick::mae, yardstick::rmse, yardstick::rsq))
 
-# xgb_trained %>% tune::collect_metrics()
-
-# re-write this func so that it returns 2 outcome models and 1 df
 get_trained_xgb_model <- function(data) {
     recipe_part <- data %>% recipes::recipe(y_factual ~ .)
     df_juice <- recipe_part %>%
@@ -69,18 +62,17 @@ get_trained_xgb_model <- function(data) {
     xgb_wf <- workflows::workflow() %>%
         workflows::add_recipe(recipe_part) %>%
         workflows::add_model(xgb_spec)
-    xgb_fit <- xgb_wf %>% generics::fit(df_juice)
-    return(xgb_fit)
+    xgb_wf %>%
+        generics::fit(df_juice) %>%
+        return()
 }
-# predict(ret$model, ret$df)
-# test <- df_outcome %>% dplyr::bind_cols(predict(xgb_fit, df_outcome))
 
-est.fn <- function(data, index) {
+est_DRE <- function(data) {
     # train outcome models on treated and control, and then get the 2 predictions on data
     w.out <- WeightIt::weightit(treatment ~ . - y_factual, data = data, estimand = estimand, method = "ps")
     data_ps <- data %>% dplyr::bind_cols(w.out$ps %>% as.data.frame() %>% magrittr::set_colnames(c("ps")))
-    df1 <- data_ps[index, ] %>% dplyr::filter(treatment == 1)
-    df0 <- data_ps[index, ] %>% dplyr::filter(treatment == 0)
+    df1 <- data_ps %>% dplyr::filter(treatment == 1)
+    df0 <- data_ps %>% dplyr::filter(treatment == 0)
     model1 <- get_trained_xgb_model(df1)
     model0 <- get_trained_xgb_model(df0)
     # calc DRE
@@ -93,18 +85,33 @@ est.fn <- function(data, index) {
     return(DRE)
 }
 
-# estimate ATE!
-index_whole <- df %>% nrow()
-start_DRE <- proc.time() # time measurement starts
-ATE_DRE <- est.fn(df_juice, 1:index_whole)
-proc.time() - start_DRE # time measurement ends
+# estimate ATE
+set.seed(13)
+tictoc::tic()
+ATE_DRE <- est_DRE(df_juice)
+tictoc::toc()
 ATE_DRE %>% print()
 
+# bootstrap by rsample
+total_rep <- 1000
+resample <- rsample::bootstraps(data = df_juice, times = total_rep)
+# parallel computation
+library(doParallel)
+cores <- parallel::detectCores() - 1
+cl <- parallel::makeCluster(cores)
+doParallel::registerDoParallel(cl)
 
-# estimate DRE of boot-strapping std
-library(parallel)
-total_rep <- 10
-start_boot <- proc.time() # time measurement starts
-boot.out <- boot::boot(statistic = est.fn, data = df_juice, R = total_rep, parallel = "multicore", ncpus = parallel::detectCores())
-proc.time() - start_boot # time measurement ends
-boot::boot.ci(boot.out, type = "basic")
+# time stamp
+Sys.time() %>% print()
+tictoc::tic() # time measurement starts
+# calc
+res <- foreach::foreach(i = 1:total_rep, .combine = "c", .packages = c("magrittr", "rsample", "recipes", "parsnip", "workflows", "generics", "xgboost", "dplyr", "WeightIt")) %dopar% {
+    resample$splits[i] %>%
+        as.data.frame() %>%
+        est_DRE()
+}
+tictoc::toc() # time measurement ends
+parallel::stopCluster(cl)
+res %>% mean()
+# percentile 95% confidence interval
+res %>% quantile(probs = c(.025, .975))
