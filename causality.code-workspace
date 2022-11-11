@@ -6,16 +6,21 @@
 	],
 	"settings": {
 		"cSpell.words": [
-			"coeff",
-			"coeftest",
-			"Covariate",
-			"dataframe",
-			"dplyr",
-			"estimand",
-			"lmtest",
-			"logit",
-			"magrittr",
-			"tidymodels"
-		]
+            "coeff",
+            "coeftest",
+            "Covariate",
+            "dataframe",
+            "dopar",
+            "dplyr",
+            "estimand",
+            "lmtest",
+            "logit",
+            "magrittr",
+            "probs",
+            "rsample",
+            "tidymodels",
+            "weightit",
+            "xgboost"
+        ]
 	}
 }
