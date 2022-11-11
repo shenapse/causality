@@ -14,13 +14,14 @@ df_juice <- recipes::recipe(df, treatment ~ .) %>%
 match.out <- MatchIt::matchit(formula = treatment ~ . - y_factual, data = df_juice, distance = "glm", method = "optimal", ratio = 2)
 
 # check balancing
+library(cobalt)
 # treatment <- df_juice %>% dplyr::pull(treatment)
 # covs <- df_juice %>% dplyr::select(-y_factual)
 # show balance table
 cobalt::bal.tab(match.out, thresholds = c(m = .1, v = 2), imbalanced.only = TRUE)
 
 # show love plot
-love.plot(match.out, binary = "std", thresholds = c(m = .1))
+cobalt::love.plot(match.out, binary = "std", thresholds = c(m = .1))
 
 # density plot by cobalt, which cannot display multi densities at the same time
 cobalt::bal.plot(match.out, var.name = "X21", which = "both")

@@ -46,7 +46,8 @@ match.out <- Matching::Match(Y = df %>% dplyr::pull(y_factual), Tr = treatment, 
 # as it is a more widely-applicable tool for checking balance
 # with match object from matching package
 # -----------------------
-# prepare data for balance checking
+library(cobalt)
+# prepare variables for balance checking
 
 covs <- df_juice %>% dplyr::select(dplyr::starts_with("X"))
 p.score <- df_TXp %>% dplyr::pull(p.score)
@@ -54,7 +55,7 @@ p.score <- df_TXp %>% dplyr::pull(p.score)
 cobalt::bal.tab(match.out, treat = treatment, covs = covs, distance = ~p.score, thresholds = c(m = .1, v = 2), imbalanced.only = TRUE)
 
 # int = TRUE and poly = option are useful when exploring interaction term
-cobalt::bal.tab(match.out, treat = treatment, covs = covs, distance = ~p.score, thresholds = c(m = .1, v = 2), imbalanced.only = TRUE, int = TRUE, poly = 2)
+# cobalt::bal.tab(match.out, treat = treatment, covs = covs, distance = ~p.score, thresholds = c(m = .1, v = 2), imbalanced.only = TRUE, int = TRUE, poly = 2)
 
 # density plot
 cobalt::bal.plot(match.out, treat = treatment, covs = covs, distance = ~p.score, var.name = "X7", which = "both")
