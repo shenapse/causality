@@ -1,12 +1,13 @@
 # Sample code estimating ATT and ATE with propensity score
 
 - Contents
+
   - Matching and balancing diagnosis
   - Estimation of ATT by matching
-  - Estimation of ATE by doubly robust estimator
+  - Estimation of ATE by doubly robust estimator (using GBDT for outcome model)
   - Cluster-Robust std
   - Boot-strapping std
-  - IHDP dataset
+  - with IHDP dataset
 
 - Main Packages
   - matching: Matching and MatchIt, WeightIt package
