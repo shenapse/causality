@@ -3,5 +3,19 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"settings": {
+		"cSpell.words": [
+			"coeff",
+			"coeftest",
+			"Covariate",
+			"dataframe",
+			"dplyr",
+			"estimand",
+			"lmtest",
+			"logit",
+			"magrittr",
+			"tidymodels"
+		]
+	}
 }
