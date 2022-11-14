@@ -13,23 +13,28 @@ df_juice <- recipes::recipe(df, treatment ~ .) %>%
 
 # propensity score matching by weightit
 estimand <- "ATT"
-# W.pscore.out <- WeightIt::weightit(treatment ~ . - y_factual, data = df_juice, estimand = estimand, method = "ps")
-# see how the weights are estimated
-# W.pscore.out %>% print()
-# see summary stat of the weighting
-# W.pscore.out %>% summary()
-# entropy balancing by weigthit
+if (interactive()) {
+    W.pscore.out <- WeightIt::weightit(treatment ~ . - y_factual, data = df_juice, estimand = estimand, method = "ps")
+    # see how the weights are estimated
+    W.pscore.out %>% print()
+    # see summary stat of the weighting
+    W.pscore.out %>% summary()
+}
+
 W.entropy.out <- WeightIt::weightit(treatment ~ . - y_factual, data = df_juice, estimand = estimand, method = "ebal")
+# entropy balancing by weigthit
 # W.entropy.out %>% summary()
 
 # balancing check by cobalt
-cobalt::set.cobalt.options(imbalanced.only = TRUE)
-# on propensity score version
-# cobalt::bal.tab(W.pscore.out, stats = c("m", "v"), thresholds = c(m = .05), imbalanced.only = TRUE)
-# on entropy weighting
-cobalt::bal.tab(W.entropy.out, stats = c("m", "v"), thresholds = c(m = .05))
-
-# by boot-strapping
+if (interactive()) {
+    library(cobalt)
+    cobalt::set.cobalt.options(imbalanced.only = TRUE, binary = "std")
+    # on propensity score version
+    cobalt::bal.tab(W.pscore.out, stats = c("m", "v"), thresholds = c(m = .05), imbalanced.only = TRUE)
+    # on entropy weighting
+    cobalt::bal.tab(W.entropy.out, stats = c("m", "v"), thresholds = c(m = .05))
+    cobalt::love.plot(W.entropy.out, , line = TRUE, thresholds = c(m = .05), estimand = estimand)
+}
 
 # outcome model
 outcome_model_trained <- lm(y_factual ~ ., data = df_juice, weights = W.entropy.out$weights)
@@ -42,5 +47,6 @@ est.fn <- function(data, index) {
     return(coef(model_trained)["treatment"])
 }
 
+set.seed(123)
 boot.out <- boot::boot(statistic = est.fn, data = df_juice, R = 2000)
 boot::boot.ci(boot.out, type = "bca")
