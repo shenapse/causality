@@ -5,8 +5,6 @@ df <- read.table(path_data, header = TRUE)
 
 df_juice <- df %>%
     recipes::recipe() %>%
-    # recipes::step_interact(terms = ~ X6:X4) %>%
-    # add interaction term for reduce in-balance (see balance check below)
     recipes::update_role(dplyr::starts_with("X"), new_role = "predictor") %>%
     recipes::update_role(treatment, new_role = "outcome") %>%
     recipes::update_role(y_factual, new_role = "id variable") %>%
@@ -15,14 +13,16 @@ df_juice <- df %>%
     recipes::prep() %>%
     recipes::juice()
 
-# match data with treatment:control = 1:2 (see ratio parameter)
+#------------------------------------
+# propensity score
+#------------------------------------
+
+# match data with treatment:control = 1:2 (as specified by ratio parameter)
 match.out <- MatchIt::matchit(formula = treatment ~ . - y_factual, data = df_juice, distance = "glm", method = "optimal", ratio = 2)
 
 if (integrate()) {
     # check balancing
     library(cobalt)
-    # treatment <- df_juice %>% dplyr::pull(treatment)
-    # covs <- df_juice %>% dplyr::select(-y_factual)
     # show balance table
     cobalt::bal.tab(match.out, thresholds = c(m = .1, v = 2), imbalanced.only = TRUE)
 
@@ -31,12 +31,15 @@ if (integrate()) {
 
     # density plot by cobalt, which cannot display multi densities at the same time
     cobalt::bal.plot(match.out, var.name = "X21", which = "both")
-    # contrary to the plot method
+    # this shows a few density plots at the same time
     match.out %>% plot(type = "density", interactive = FALSE, which.xs = c("X1", "X2"))
 }
 
+#------------------------------------
+# outcome model
+#------------------------------------
+
 # estimate ATT
-# prepare df for linear model
 outcome_model_trained <- lm(y_factual ~ ., data = match.out %>% MatchIt::match.data(), weights = weights)
 ATT_est <- outcome_model_trained$coefficients["treatment"]
 ATT_est %>% print()

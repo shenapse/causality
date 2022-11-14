@@ -3,6 +3,10 @@ library(magrittr)
 path_data <- project_root$find_file("data/ihdp_obs.csv")
 df <- read.table(path_data, header = TRUE)
 
+#------------------------------------
+# propensity score
+#------------------------------------
+
 # df for estimating propensity score
 df_TX <- df %>%
     dplyr::select(-y_factual)
@@ -33,11 +37,6 @@ wf <- workflows::workflow() %>%
     workflows::add_recipe(preprocessor) %>%
     workflows::add_model(glm_spec)
 
-# juice dataframe to be used in fit below
-df_juice <- preprocessor %>%
-    recipes::prep() %>%
-    recipes::juice()
-
 # train the model
 glm_trained <- generics::fit(wf, df)
 
@@ -47,27 +46,29 @@ if (interactive()) {
 }
 
 # new column of predicted propensity score
-df_TXp <- df_juice %>%
+df_full <- preprocessor %>%
+    recipes::prep() %>%
+    recipes::juice() %>%
     dplyr::bind_cols(predict(glm_trained, df) %>% set_colnames(c("p.score")))
 
 # match data based on propensity score
 treatment <- df_juice$treatment
 # by Matching package
-match.out <- Matching::Match(Y = df_juice$y_factual, Tr = treatment, X = df_TXp %>% dplyr::pull(p.score), M = 2, estimand = "ATT")
+match.out <- Matching::Match(Y = df_juice$y_factual, Tr = treatment, X = df_full %>% dplyr::pull(p.score), M = 2, estimand = "ATT")
 
 # -----------------------------------------------------------
 # check balance of the matching result
 # matching package provides Matching::MatchBalance()
 # but we use cobalt package instead
 # as it is a more widely-applicable tool for checking balance
-# with match object from matching package
 # -----------------------------------------------------------
 if (interactive()) {
+    # loading cobalt is required for love.plot() to find bal.tab() method
     library(cobalt)
 
     # prepare variables for balance checking
-    covs <- df_juice %>% dplyr::select(dplyr::starts_with("X"))
-    p.score <- df_TXp %>% dplyr::pull(p.score)
+    covs <- df_full %>% dplyr::select(dplyr::starts_with("X"))
+    p.score <- df_full %>% dplyr::pull(p.score)
 
     # show balance table
     cobalt::bal.tab(match.out, treat = treatment, covs = covs, distance = ~p.score, thresholds = c(m = .1, v = 2), imbalanced.only = TRUE)
@@ -82,6 +83,9 @@ if (interactive()) {
     cobalt::love.plot(match.out, treat = treatment, covs = covs, distance = ~p.score, binary = "std", thresholds = c(m = .1))
 }
 
-# estimated ATT
+#------------------------------------
+# Estimation of ATT
+#------------------------------------
+
 ATT_est <- match.out$est[1, 1]
 Matching::summary.Match(match.out)

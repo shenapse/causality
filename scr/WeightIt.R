@@ -4,12 +4,14 @@ path_data <- project_root$find_file("data/ihdp_obs.csv")
 df <- read.table(path_data, header = TRUE)
 
 df_juice <- recipes::recipe(df, treatment ~ .) %>%
-    # add interaction term for reduce in-balance (see balance check below)
-    # recipes::step_interact(terms = ~ X6:X4) %>%
     recipes::step_interact(terms = ~ -y_factual) %>%
     recipes::step_normalize(-where(is.integer), -y_factual) %>%
     recipes::prep() %>%
     recipes::juice()
+
+#------------------------------------
+# matching by weightit
+#------------------------------------
 
 # propensity score matching by weightit
 estimand <- "ATT"
@@ -36,7 +38,10 @@ if (interactive()) {
     cobalt::love.plot(W.entropy.out, , line = TRUE, thresholds = c(m = .05), estimand = estimand)
 }
 
+#------------------------------------
 # outcome model
+#------------------------------------
+
 outcome_model_trained <- lm(y_factual ~ ., data = df_juice, weights = W.entropy.out$weights)
 coef(outcome_model_trained)["treatment"]
 
