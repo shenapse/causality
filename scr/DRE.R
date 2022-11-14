@@ -149,33 +149,38 @@ ATE_DRE <- est_DRE(df)
 tictoc::toc()
 ATE_DRE %>% print()
 
+# calculate 95% confidence interval by bootstrap
 # bootstrap by rsample
-total_rep <- 1000
+total_rep <- 2000
 resample <- rsample::bootstraps(data = df, times = total_rep)
 
 # time stamp
 Sys.time() %>% print()
 tictoc::tic() # time measurement starts
-# calc
-res <- foreach::foreach(i = 1:total_rep, .combine = "c", .packages = c("magrittr", "rsample", "recipes", "parsnip", "workflows", "generics", "xgboost", "dplyr", "WeightIt")) %dopar% {
+# parallel computation
+boots <- foreach::foreach(i = 1:total_rep, .combine = "c", .packages = c("magrittr", "rsample", "recipes", "parsnip", "workflows", "generics", "xgboost", "dplyr", "WeightIt")) %dopar% {
     resample$splits[i] %>%
         as.data.frame() %>%
         est_DRE()
 }
 tictoc::toc() # time measurement ends
 # show result
+boots %>% mean() # 4.657371
+boots %>% quantile(probs = c(.025, .975))
+# save distribution of bootstrap samples as PNG
 library(ggplot2)
-res %>% mean() # 4.465687
-# percentile 95% confidence interval
-res %>% quantile(probs = c(.025, .975))
-g <- res %>%
+title <- stringr::str_c("Distribution of bootstrap samples of doubly-robust estimator. (N=", total_rep, ")")
+g <- boots %>%
     as.data.frame() %>%
-    magrittr::set_colnames(c("dre")) %>%
-    ggplot(aes(x = dre)) +
+    magrittr::set_colnames(c("DRE")) %>%
+    ggplot(aes(x = DRE)) +
     geom_histogram(aes(y = ..density..), binwidth = .05, fill = "#69b3a2", color = "#e9ecef", alpha = 0.9) +
-    geom_density(color = "#69b3a2")
+    geom_density(color = "#69b3a2") +
+    ggtitle(title) +
+    theme(plot.title = element_text(size = 15))
 # save as png
-ggsave(file = project_root$find_file("scr/DRE_bootstrap.png"))
+file_name <- stringr::str_c("DRE_bootstrap_", total_rep, ".png")
+ggsave(file = project_root$find_file("scr", file_name))
 
 # end parallel computation
 parallel::stopCluster(cl)
