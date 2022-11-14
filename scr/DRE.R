@@ -175,7 +175,7 @@ g <- res %>%
     geom_histogram(aes(y = ..density..), binwidth = .05, fill = "#69b3a2", color = "#e9ecef", alpha = 0.9) +
     geom_density(color = "#69b3a2")
 # save as png
-ggsave(file = project_root$find_file("scr/DRE_bootstrap.png", plot = g))
+ggsave(file = project_root$find_file("scr/DRE_bootstrap.png"))
 
 # end parallel computation
 parallel::stopCluster(cl)
